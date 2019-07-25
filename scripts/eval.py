@@ -3,6 +3,8 @@ from __future__ import print_function
 import os
 import sys
 
+from time import time
+
 cur_path = os.path.abspath(os.path.dirname(__file__))
 root_path = os.path.split(cur_path)[0]
 sys.path.append(root_path)
@@ -60,15 +62,23 @@ class Evaluator(object):
             model = self.model
         logger.info("Start validation, Total sample: {:d}".format(len(self.val_loader)))
         for i, (image, target, filename) in enumerate(self.val_loader):
+            if i == 0:
+                start = time()
+            current = time()
             image = image.to(self.device)
             target = target.to(self.device)
 
             with torch.no_grad():
                 outputs = model(image)
             self.metric.update(outputs[0], target)
+            end = time()
             pixAcc, mIoU = self.metric.get()
-            logger.info("Sample: {:d}, validation pixAcc: {:.3f}, mIoU: {:.3f}".format(
-                i + 1, pixAcc * 100, mIoU * 100))
+            avg_fps = (i + 1) * args.num_gpus / (end - start)
+            fps = args.num_gpus / (end - current)
+            logger.info("Sample: {:d}, validation pixAcc: {:.3f}, mIoU: {:.3f}"
+                        ", fps (avg / current): {:.3f} / {:.3f}".format(
+                            i + 1, pixAcc * 100, mIoU * 100, avg_fps, fps
+                        ))
 
             if self.args.save_pred:
                 pred = torch.argmax(outputs[0], 1)
@@ -83,6 +93,7 @@ class Evaluator(object):
 if __name__ == '__main__':
     args = parse_args()
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
+    args.num_gpus = num_gpus
     args.distributed = num_gpus > 1
     if not args.no_cuda and torch.cuda.is_available():
         cudnn.benchmark = True
