@@ -105,7 +105,12 @@ if __name__ == '__main__':
     if args.save_pred:
         outdir = '../runs/pred_pic/{}_{}_{}'.format(args.model, args.backbone, args.dataset)
         if not os.path.exists(outdir):
-            os.makedirs(outdir)
+            try:
+                os.makedirs(outdir)
+            # Occurs in distributed evaluation if one of the other threads
+            # creates the directory prior to the local thread.
+            except FileExistsError:
+                pass
 
     logger = setup_logger("semantic_segmentation", args.log_dir, get_rank(),
                           filename='{}_{}_{}_log.txt'.format(args.model, args.backbone, args.dataset), mode='a+')
