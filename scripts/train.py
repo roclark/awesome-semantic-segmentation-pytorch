@@ -97,6 +97,9 @@ def parse_args():
                         help='run validation every val-epoch')
     parser.add_argument('--skip-val', action='store_true', default=False,
                         help='skip validation during training')
+    parser.add_argument('--save-pred', type=str, default=None,
+                        help='specify the directory to save validation samples'
+                        ' to')
     args = parser.parse_args()
 
     # default settings for epochs, batch_size and lr

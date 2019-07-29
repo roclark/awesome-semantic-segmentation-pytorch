@@ -81,7 +81,8 @@ class Evaluator(object):
 
                 predict = pred.squeeze(0)
                 mask = get_color_pallete(predict, self.args.dataset)
-                mask.save(os.path.join(outdir, os.path.splitext(filename[0])[0] + '.png'))
+                output_name = os.path.splitext(filename[0])[0] + '.png'
+                mask.save(os.path.join(self.args.save_pred, output_name))
         synchronize()
 
 
@@ -101,7 +102,6 @@ if __name__ == '__main__':
         synchronize()
 
     # TODO: optim code
-    args.save_pred = True
     if args.save_pred:
         outdir = '../runs/pred_pic/{}_{}_{}'.format(args.model, args.backbone, args.dataset)
         if not os.path.exists(outdir):
